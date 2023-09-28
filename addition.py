@@ -8,5 +8,8 @@ class Addition:
     def addition(self):
         return "Addition = {} ".format(self.number1 + self.number2)
     
+    def mul(self):
+        return "mul = {} ".format(self.number1 * self.number2)
+    
 if __name__ == "__main__":
     add = Addition(10, 20)
