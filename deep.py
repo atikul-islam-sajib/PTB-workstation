@@ -6,7 +6,7 @@ from sklearn.preprocessing import LabelEncoder
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from keras.models import Sequential
-from keras.layers import Embedding, Flatten, Dense, Dropout
+from keras.layers import Embedding, Flatten, Dense, Dropout, LSTM, Bidirectional
 from keras.utils import to_categorical
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 
@@ -25,7 +25,7 @@ y = label_encoder.fit_transform(y)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 # Tokenize the text data
-max_words = 1000  # Maximum number of words to keep based on word frequency
+max_words = 10000  # Maximum number of words to keep based on word frequency
 tokenizer = Tokenizer(num_words=max_words)
 tokenizer.fit_on_texts(X_train)
 
@@ -34,14 +34,15 @@ X_train_seq = tokenizer.texts_to_sequences(X_train)
 X_test_seq = tokenizer.texts_to_sequences(X_test)
 
 # Pad sequences to ensure consistent input length
-max_sequence_length = 100  # You can adjust this value as needed
+max_sequence_length = 150  # You can adjust this value as needed
 X_train_pad = pad_sequences(X_train_seq, maxlen=max_sequence_length)
 X_test_pad = pad_sequences(X_test_seq, maxlen=max_sequence_length)
 
-# Create a simple feedforward neural network model
+# Create a more complex neural network model
 model = Sequential()
 model.add(Embedding(input_dim=max_words, output_dim=128, input_length=max_sequence_length))
-model.add(Flatten())
+model.add(Bidirectional(LSTM(64, return_sequences=True)))
+model.add(Bidirectional(LSTM(64)))
 model.add(Dense(128, activation='relu'))
 model.add(Dropout(0.5))
 model.add(Dense(3, activation='softmax'))  # 3 output classes (positive, negative, neutral)
@@ -54,8 +55,8 @@ y_train_onehot = to_categorical(y_train, num_classes=3)
 y_test_onehot = to_categorical(y_test, num_classes=3)
 
 # Train the model
-epochs = 10  # You can adjust this value
-batch_size = 32  # You can adjust this value
+epochs = 20  # You can adjust this value
+batch_size = 64  # You can adjust this value
 model.fit(X_train_pad, y_train_onehot, epochs=epochs, batch_size=batch_size, validation_split=0.2)
 
 # Evaluate the model
