@@ -6,7 +6,8 @@ from sklearn.preprocessing import LabelEncoder
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from keras.models import Sequential
-from keras.layers import Embedding, Flatten, Dense, Dropout, LSTM, Bidirectional
+from keras.layers import Embedding, Flatten, Dense, Dropout, LSTM, Bidirectional, SpatialDropout1D, Conv1D, MaxPooling1D, GlobalMaxPooling1D
+from keras.optimizers import Adam
 from keras.utils import to_categorical
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 
@@ -41,21 +42,29 @@ X_test_pad = pad_sequences(X_test_seq, maxlen=max_sequence_length)
 # Create a more complex neural network model
 model = Sequential()
 model.add(Embedding(input_dim=max_words, output_dim=128, input_length=max_sequence_length))
-model.add(Bidirectional(LSTM(64, return_sequences=True)))
-model.add(Bidirectional(LSTM(64)))
-model.add(Dense(128, activation='relu'))
+model.add(Bidirectional(LSTM(128, return_sequences=True)))
+model.add(Bidirectional(LSTM(128, return_sequences=True)))
+model.add(Conv1D(128, 5, activation='relu'))
+model.add(MaxPooling1D(5))
+model.add(SpatialDropout1D(0.2))
+model.add(Conv1D(256, 5, activation='relu'))
+model.add(MaxPooling1D(5))
+model.add(GlobalMaxPooling1D())
+model.add(Dense(256, activation='relu'))
 model.add(Dropout(0.5))
+model.add(Dense(128, activation='relu'))
 model.add(Dense(3, activation='softmax'))  # 3 output classes (positive, negative, neutral)
 
-# Compile the model
-model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+# Compile the model with a custom learning rate
+custom_optimizer = Adam(lr=0.0001)
+model.compile(optimizer=custom_optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
 
 # Convert labels to one-hot encoding
 y_train_onehot = to_categorical(y_train, num_classes=3)
 y_test_onehot = to_categorical(y_test, num_classes=3)
 
 # Train the model
-epochs = 20  # You can adjust this value
+epochs = 30  # You can adjust this value
 batch_size = 64  # You can adjust this value
 model.fit(X_train_pad, y_train_onehot, epochs=epochs, batch_size=batch_size, validation_split=0.2)
 
